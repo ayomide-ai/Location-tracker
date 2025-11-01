@@ -6,7 +6,7 @@ const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Store active WebSocket connections for real-time updates
 const connections = new Map();
@@ -101,3 +101,4 @@ server.listen(3000, '0.0.0.0', () => {
     console.log('👁️ Admin Dashboard: http://your-ip:3000/admin.html');
     console.log('📊 Status: http://your-ip:3000/status');
 });
+
